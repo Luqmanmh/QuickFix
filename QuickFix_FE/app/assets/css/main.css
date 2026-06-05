@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-c-primary : #007979;
+  --color-c-secondary : #98eff1;
+  --color-c-tertiary : #fdf1e7;
+  --color-c-neutral : #fff8f4;
+     
+}
+
+html,
+body,
+#__nuxt {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}

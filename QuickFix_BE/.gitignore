@@ -1,0 +1,97 @@
+# ==================================================
+# Django
+# ==================================================
+
+/products/
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Django settings
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static files
+staticfiles/
+
+# Media uploads
+media/
+
+# Migrations (optional)
+# **/migrations/
+# !**/migrations/__init__.py
+
+# Coverage / Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+
+# ==================================================
+# Nuxt 4
+# ==================================================
+
+# Dependencies
+node_modules/
+
+# Nuxt build
+.nuxt/
+.output/
+
+# Nitro
+.nitro/
+
+# Generated files
+dist/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# ==================================================
+# IDEs
+# ==================================================
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# JetBrains
+.idea/
+
+# ==================================================
+# OS Files
+# ==================================================
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# ==================================================
+# Misc
+# ==================================================
+
+*.tmp
+*.temp
+.cache/

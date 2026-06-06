@@ -83,8 +83,10 @@ onMounted(() => {
           <div>
             <p class="">Payment Options</p>
             <v-radio-group v-model="paymentMethod" hide-details mandatory>
-              <v-radio label="Pay On-Site " value="ON_SITE" color="primary"></v-radio>
+              <span class="text-slate-500 mt-2">On-Site:</span>
+              <v-radio label="Pay At Pharmacy Counter " value="ON_SITE" color="primary"></v-radio>
               <v-divider></v-divider>
+              <span class="text-slate-500 mt-2">Online:</span>
               <v-radio label="QRIS" value="QRIS" color="primary"></v-radio>
               <v-radio label="BNI Virtual Acount" value="BNI" color="primary"></v-radio>
               <v-radio label="BCA Virtual Acount" value="BCA" color="primary"></v-radio>
@@ -104,7 +106,7 @@ onMounted(() => {
 
     <v-dialog v-model="showPaymentModal" max-width="500" persistent>
       <v-card class="rounded-xl pa-4">
-        <v-card-title class="text-xl font-bold flex items-center gap-2 border-b pb-3">
+        <v-card-title class="text-xl font-bold d-flex items-center ga-2 border-b pb-3">
           <v-icon color="primary">
             {{ paymentMethod === 'QRIS' ? 'mdi-qrcode' : 'mdi-bank-transfer' }}
           </v-icon>
@@ -114,7 +116,7 @@ onMounted(() => {
         <v-card-text class="py-6 flex flex-col items-center text-center gap-4">
           <p class="text-sm text-slate-500">
             You are processing an online transaction via <strong class="text-slate-800">{{ paymentMethod }}</strong> for a total invoice value of:
-          </p>
+          </p>z
           
           <span class="text-3xl font-black text-cyan-900 bg-slate-50 px-6 py-2 rounded-xl border border-dashed">
             {{ Number(checkoutStore.itemsSubtotal)?.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', trailingZeroDisplay: 'stripIfInteger' }) }}

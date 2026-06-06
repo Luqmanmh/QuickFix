@@ -16,7 +16,7 @@ const dashboardRoute = computed(() => {
     case 'pharmacist':
       return '/pharmacist/manage'
     default:
-      return '/shop'
+      return '/'
   }
 })
 </script>

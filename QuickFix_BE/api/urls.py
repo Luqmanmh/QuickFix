@@ -28,7 +28,9 @@ urlpatterns = [
   path("order/list", views.OrderListView.as_view(), name="User Order List"),
   path("order/manage/list", views.OrderManageListView.as_view(), name="Staff Order List"),
   path("order/prepready/<str:id>", views.PrepReadyOrderView.as_view(), name="set to Prep Or ready"),
-  path("order/scan", views.cashierOrderView.as_view(), name="set to Prep Or ready"),
+  path("order/scan", views.cashierOrderView.as_view(), name="cashier scan qr"),
+  path("order/pay/<str:id>", views.OrderOnSItePayView.as_view(), name="set to paid"),
+  path("order/complete/<str:id>", views.OrderCompleteView.as_view(), name="set to complete"),
   
   path("orderitem/manage/<str:id>", views.OrderItemsListView.as_view(), name="Order Item for Phar"),
   path("orderitem/setbatch", views.setOrderItemBatch.as_view(), name="Order Item set batch"),

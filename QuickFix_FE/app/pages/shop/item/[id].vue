@@ -44,8 +44,8 @@ const addToCart = async () => {
     error = true
   } finally {
     if (!error) {
-      triggerSnackbar('Item successfully added to cart!', 'primary')
       isloading.value = false
+      triggerSnackbar('Item successfully added to cart!', 'primary')
     }
   }
 }

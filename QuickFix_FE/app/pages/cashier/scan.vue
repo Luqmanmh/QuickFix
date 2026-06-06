@@ -27,16 +27,6 @@ const headerItem = [
   { title: "Price", key: "price_at_purchase", align: "center" },
 ]
 
-const orderData = ref({
-  id: 'QF-2024-8839-PX',
-  customer: { name: 'Alexander Murphy', dob: '12/05/1982', age: 41 },
-  items: [
-    { name: 'Amoxicillin 500mg', details: 'Capsule • Take 3x daily', qty: 30, price: 14.50 },
-    { name: 'Lisinopril 10mg', details: 'Tablet • Once daily morning', qty: 90, price: 22.00 }
-  ],
-  totalAmount: 46.49
-})
-
 function onDetect(detectedCodes) {
   if (detectedCodes && detectedCodes.length > 0) {
 
@@ -76,15 +66,49 @@ const handleFindOrder = async () => {
     isloading.value = false
   }
 }
+const handleCompleteOrder = async (stat) => {
+
+  let error = false
+  try {
+    isloading.value = true
+    if (stat == 'READY') {
+      const res = await api(`order/complete/${orderSearchQuery.value}`, {
+        method: 'PUT',
+      })
+    }
+    else if (stat == 'ORDER_CREATED') {
+      const res = await api(`order/pay/${orderSearchQuery.value}`, {
+        method: 'PUT',
+      })
+    }
+
+  } catch (err) {
+    console.log('error getting items', err)
+    triggerSnackbar('Failed Assign order status, please restart payment/pickup input', 'danger')
+    item.value = null
+    error = true
+  } finally {
+    isloading.value = false
+    if (stat == 'READY') {
+      triggerSnackbar(`Order ${orderSearchQuery.value} Completed succesfully `, 'primary')
+      orderSearchQuery.value = ''
+    }
+    else if (stat == 'ORDER_CREATED') {
+      triggerSnackbar(`Order ${orderSearchQuery.value} Paid succesfully `, 'primary')
+      handleFindOrder()
+    }
+
+  }
+}
 
 const selectedTotal = computed(() => {
   let sum = 0
   return item?.value.data?.items.reduce((sum, item) => {
-      const price = item.price_at_purchase || 0
-      const qty = item.quantity || 0
-      return sum + (price * qty)
-    }, 0)
-  })
+    const price = item.price_at_purchase || 0
+    const qty = item.quantity || 0
+    return sum + (price * qty)
+  }, 0)
+})
 
 const debouncedFetch = debounce(() => {
   handleFindOrder()
@@ -92,19 +116,12 @@ const debouncedFetch = debounce(() => {
 
 watch(orderSearchQuery, (newValue) => {
   if (newValue === null || newValue.trim() === '') {
-    item.value = null          
-    orderSearchQuery.value = '' 
-    return                    
+    item.value = null
+    orderSearchQuery.value = ''
+    return
   }
   debouncedFetch()
 })
-
-const handleProcessPickup = () => {
-  const userConfirmed = window.confirm("Confirm verification metrics and finalize package handoff distribution?")
-  if (userConfirmed) {
-    window.alert("Transaction finalized successfully!")
-  }
-}
 </script>
 
 <template>
@@ -230,24 +247,36 @@ const handleProcessPickup = () => {
       </div>
       <v-card
         class="w-full pa-6 rounded-xl border! border-c-tertiary bg-white grid grid-cols-12 gap-6 items-center mt-3"
-        elevation="0">
+        elevation="0" v-if="item?.data?.status == 'ORDER_CREATED' || item?.data?.status == 'READY'">
 
-        <div class="col-span-12 sm:col-span-4 flex flex-col pb-4 sm:pb-0">
+        <div class="col-span-12 sm:col-span-4 flex flex-col pb-4 sm:pb-0" v-if="item?.data?.status == 'ORDER_CREATED'">
           <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Total Amount Due</span>
           <span class="text-4xl font-black text-cyan-900 mt-1">
-            {{ Number(selectedTotal)?.toLocaleString('id-ID', {
-                  style: 'currency', currency: 'IDR',
-                  trailingZeroDisplay: 'stripIfInteger'
-                }) }}
+            {{ Number(item?.data?.total_amount)?.toLocaleString('id-ID', {
+              style: 'currency', currency: 'IDR',
+              trailingZeroDisplay: 'stripIfInteger'
+            }) }}
           </span>
         </div>
 
         <div class="col-span-12 sm:col-span-5 text-right">
-          <v-btn width="100%" height="3rem" rounded="12" color="primary" @click="handleProcessPickup">
-            <span class="text-lg">Complete Pickup</span>
+          <v-btn width="100%" height="3rem" rounded="12" color="primary"
+            @click="handleCompleteOrder(item?.data?.status)">
+            <span class="text-lg">{{ item?.data?.status == 'ORDER_CREATED' ? 'Confirm Counter Payment' : 'Complete Order'}}
+
+            </span>
           </v-btn>
         </div>
 
+      </v-card>
+      <v-card
+        class="w-full pa-6 rounded-xl border! border-c-tertiary bg-white grid grid-cols-12 gap-6 items-center mt-3"
+        elevation="0" v-if="item?.data?.status != 'ORDER_CREATED' && item?.data?.status != 'READY'">
+
+        <div class="flex-col flex text-center ">
+          <p class="font-bold uppercase tracking-wider text-c-primary text-xl">Order is currently {{ item?.data?.status == 'PAID' ? 'WAITING' : item?.data?.status }}</p>
+        </div>
+      
       </v-card>
     </div>
     <div v-else class="text-center py-12 text-sm text-slate-400 italic">

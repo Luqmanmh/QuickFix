@@ -10,7 +10,7 @@ const props = defineProps({
 <template>
   <div>
     <v-expansion-panels class="border! rounded-lg border-black">
-      <v-expansion-panel>
+      <v-expansion-panel class="bg-transparent">
         <template v-slot:title>
           <Orderitem :item="item" />
         </template>

@@ -24,6 +24,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from rest_framework.permissions import AllowAny
+import random
 
 load_dotenv()
 
@@ -392,6 +393,8 @@ class CartItemsView(APIView):
             
             item.quantity += quant
             item.save()
+            
+        return Response({'details' : 'product added to cart'}, status=status.HTTP_201_CREATED)
     
     def get(self, request, format=None):
         user = request.user
@@ -442,6 +445,7 @@ class CreateOrderView(APIView):
         user = request.user
         cart_items = request.data.get('cart_items', [])
         presc = request.data.get('presc', None)
+        payment_method = request.data.get('payment_method', 'ON_SITE')
         
         if len(cart_items) < 1:
             return Response({"detaiks": "No items Provided"}, status=status.HTTP_400_BAD_REQUEST)
@@ -459,11 +463,26 @@ class CreateOrderView(APIView):
                     updated_at = timezone.now(),
                 )
                 for item in items:
+                    batch = ProductBatch.objects.filter(product = item.product).order_by('expiry_date')
+                    batch = batch.filter(stock_qty__gt = item.quantity)
+                    batch = batch.filter(expiry_date__gt = timezone.now()).first()
                     orditem = OrderItem.objects.create(
                         order = order,
+                        batch = batch,
                         product = item.product,
                         quantity = item.quantity,
                         price_at_purchase = item.product.price,
+                    )
+                    
+                    batch.stock_qty -= item.quantity
+                    batch.save()
+                    
+                    StockMovement.objects.create(
+                        batch=batch,
+                        movement_type=StockMovement.MovementType.SALE,
+                        created_at=timezone.now(),
+                        quantity=-item.quantity,  
+                        notes=f"Order Creation: {order.id}"
                     )
                     
                     total_price += item.quantity * item.product.price
@@ -472,6 +491,34 @@ class CreateOrderView(APIView):
                 
                 order.total_amount = total_price
                 order.save()
+                
+                if payment_method != 'ON_SITE':
+                    # online payment simulator
+                    payment_success = random.choices([True, False], weights=[90, 10], k=1)[0]
+                    
+                    pay_record = Payment.objects.create(
+                        order=order,
+                        payment_method=f"MOCK_GATEWAY_{payment_method}",
+                        amount=total_price,
+                        transaction_id=f"TXN-{uuid.uuid4().hex[:12].upper()}"
+                    )
+                    
+                    if payment_success:
+
+                        pay_record.status = Payment.Status.SUCCESSFUL
+                        pay_record.paid_at = timezone.now()
+                        pay_record.save()
+                        
+
+                        order.status = Order.Status.PAID
+                        order.save()
+                    else:
+
+                        pay_record.status = Payment.Status.FAILED
+                        pay_record.save()
+                        
+
+                        raise ValueError("Mock Payment Gateway: Transaction declined by issuing bank (Simulated Insufficient Funds).")
                 
             return Response(
                 {
@@ -487,7 +534,7 @@ class CreateOrderView(APIView):
             return Response(
                 {"error": "Internal Database Error"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )  
+            )    
 
 class OrderListView(APIView):
     permission_classes=[permissions.IsAuthenticated]
@@ -533,7 +580,7 @@ class BatchActionsView(APIView):
                 batch.batch_number = batch_number if batch_number else batch.batch_number
                 batch.supplier_id = supplier if supplier else batch.supplier_id
                 batch.expiry_date = expiry_date if expiry_date else batch.expiry_date
-                batch.stock_qty = stock_qty if stock_qty else batch.stock_qty
+                batch.stock_qty = stock_qty if stock_qty else 0
                 batch.save()
                 
                 stock = StockMovement.objects.create(
@@ -800,3 +847,64 @@ class cashierOrderView(APIView):
         return Response({"data" : serial.data,
                          "user": serusr.data,
                          "profile": sercust.data})
+        
+        
+class OrderOnSItePayView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def put(self, request, id, format=None):
+        try:
+            ord = Order.objects.get(pk=id)
+        except Order.DoesNotExist:
+            return Response({"error": "Order profile not found."}, status=status.HTTP_404_NOT_FOUND)
+        if ord.status == Order.Status.COMPLETED:
+            return Response({"error": "This order has already been finalized and completed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                pay_record = Payment.objects.create(
+                        order=ord,
+                        payment_method="Cashier counter",
+                        amount=ord.total_amount,
+                        transaction_id=f"TXN-{uuid.uuid4().hex[:12].upper()}",
+                        status = Payment.Status.SUCCESSFUL,
+                        paid_at = timezone.now()
+                    )
+
+                ord.status = Order.Status.PAID
+                ord.updated_at = timezone.now()
+                ord.save()
+                
+            return Response({'details': 'Order Paid successfully.'}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Internal Database Transaction Error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )  
+              
+class OrderCompleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def put(self, request, id, format=None):
+        try:
+            ord = Order.objects.get(pk=id)
+        except Order.DoesNotExist:
+            return Response({"error": "Order profile not found."}, status=status.HTTP_404_NOT_FOUND)
+        if ord.status == Order.Status.COMPLETED:
+            return Response({"error": "This order has already been finalized and completed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                    
+                ord.status = Order.Status.COMPLETED
+                ord.updated_at = timezone.now()
+                ord.save()
+                
+            return Response({'details': 'Order Paid successfully.'}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Internal Database Transaction Error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )    

@@ -65,9 +65,9 @@ onMounted(async () => {
         <h1 class="text-3xl font-semibold text-start">Your Orders</h1>
       </div>
       <div class="text-start max-w-384 md:min-w-7xl mx-auto">
-        <div v-for="(order, index) in orders" class="w-full p-1 rounded-lg flex items-center gap-3">
-          <v-expansion-panels class="border! rounded-lg border-black my-0" color="white">
-            <v-expansion-panel>
+        <div v-for="(order, index) in orders" class="w-full p-1 rounded-lg flex items-center gap-3 bg-c-tertiary">
+          <v-expansion-panels class="border! rounded-lg border-black my-0" color="tertiary" variant="accordion" flat>
+            <v-expansion-panel color="tertiary" class="bg-transparent">
               <template v-slot:title>
                 <div class="grid grid-cols-6 gap-4 justify-between w-full mx-3 p-4">
                   <div>

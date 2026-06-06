@@ -180,7 +180,7 @@ onMounted(async () => {
           <p class=" text-lg font-semibold">Order Summary</p>
           <v-divider></v-divider>
           <div class="text-lg flex justify-between">
-            <p>Total</p>
+            <p>Selected Total</p>
             <p>{{ Number(selectedTotal)?.toLocaleString('id-ID', {
                   style: 'currency', currency: 'IDR',
                   trailingZeroDisplay: 'stripIfInteger'
